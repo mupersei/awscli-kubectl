@@ -21,5 +21,5 @@ docker pull mupersei/awscli-kubectl:latest
 
 ### 2. 이미지 빌드 및 푸시
 ```
-docker buildx build --platform linux/amd64,linux/arm64 --build-arg K3S_VERSION=1.33.4 -t mupersei/awscli-kubectl:latest  --push .
+docker buildx build --platform linux/amd64,linux/arm64 --build-arg KUBECTL_VERSION=<Kubernetes Version> -t mupersei/awscli-kubectl:latest  --push .
 ```
