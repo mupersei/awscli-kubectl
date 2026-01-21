@@ -1,19 +1,36 @@
-FROM amazon/aws-cli:latest
+FROM ubuntu:24.04
 
 ARG KUBECTL_VERSION
 ARG TARGETARCH
 
-RUN if [ -z "$KUBECTL_VERSION" ]; then \
-        echo "KUBECTL_VERSION build argument is required." >&2; exit 1; \
+RUN apt-get update && \
+    apt-get install -y curl unzip jq ca-certificates less groff && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"; \
+    else \
+        echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1; \
+    fi; \
+    unzip awscliv2.zip; \
+    ./aws/install; \
+    rm -rf aws awscliv2.zip
+
+RUN set -eux; \
+    if [ -z "$KUBECTL_VERSION" ]; then \
+        echo "KUBECTL_VERSION required" >&2; exit 1; \
     fi; \
     if [ "$TARGETARCH" = "amd64" ]; then \
         curl -L "https://github.com/k3s-io/k3s/releases/download/v${KUBECTL_VERSION}%2Bk3s1/k3s" -o /usr/local/bin/k3s; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
         curl -L "https://github.com/k3s-io/k3s/releases/download/v${KUBECTL_VERSION}%2Bk3s1/k3s-arm64" -o /usr/local/bin/k3s; \
     else \
-        echo "Architecture $TARGETARCH is not supported." >&2; exit 1; \
+        echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1; \
     fi; \
     chmod +x /usr/local/bin/k3s; \
-    ln -s /usr/local/bin/k3s /usr/local/bin/kubectl
+    ln -sf /usr/local/bin/k3s /usr/local/bin/kubectl
 
-CMD ["/bin/sh"]
+CMD ["/bin/bash"]
