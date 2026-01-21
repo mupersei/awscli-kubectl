@@ -1,0 +1,19 @@
+FROM amazon/aws-cli:latest
+
+ARG KUBECTL_VERSION
+ARG TARGETARCH
+
+RUN if [ -z "$KUBECTL_VERSION" ]; then \
+        echo "KUBECTL_VERSION build argument is required." >&2; exit 1; \
+    fi; \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        curl -LO "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/arm64/kubectl"; \
+    else \
+        echo "Architecture $TARGETARCH is not supported." >&2; exit 1; \
+    fi; \
+    chmod +x kubectl; \
+    mv kubectl /usr/local/bin/kubectl
+
+CMD ["/bin/sh"]
